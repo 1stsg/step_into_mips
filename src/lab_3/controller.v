@@ -35,5 +35,5 @@ module controller(
 	maindec md(op,memtoreg,memwrite,branch,alusrc,regdst,regwrite,jump,aluop);
 	aludec ad(funct,aluop,alucontrol);
 
-	assign pcsrc = branch & zero;
+	assign pcsrc = branch & zero;//zero=1 only when the result of the ALU is zero
 endmodule

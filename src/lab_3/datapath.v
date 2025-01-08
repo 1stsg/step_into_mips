@@ -39,19 +39,19 @@ module datapath(
 	wire[31:0] srca,srcb;
 	wire[31:0] result;
 
-	flopr #(32) pcreg(clk,rst,pcnext,pc);
+	flopr #(32) pcreg(clk,rst,pcnext,pc);//send out pc at the negative edge of clock
 	adder pcadd1(pc,32'b100,pcplus4);
-	sl2 immsh(signimm,signimmsh);
-	adder pcadd2(pcplus4,signimmsh,pcbranch);
-	mux2 #(32) pcbrmux(pcplus4,pcbranch,pcsrc,pcnextbr);
-	mux2 #(32) pcmux(pcnextbr,{pcplus4[31:28],instr[25:0],2'b00},jump,pcnext);
+	sl2 immsh(signimm,signimmsh);//shift left 2 bits
+	adder pcadd2(pcplus4,signimmsh,pcbranch);//calculate branch address
+	mux2 #(32) pcbrmux(pcplus4,pcbranch,pcsrc,pcnextbr);//switch between pcplus4 and pcbranch
+	mux2 #(32) pcmux(pcnextbr,{pcplus4[31:28],instr[25:0],2'b00},jump,pcnext);//jump=1 only when j instruction, the value of jump was decided in maindec
 
-	regfile rf(clk,regwrite,instr[25:21],instr[20:16],writereg,result,srca,writedata);
-	mux2 #(5) wrmux(instr[20:16],instr[15:11],regdst,writereg);
-	mux2 #(32) resmux(aluout,readdata,memtoreg,result);
-	signext se(instr[15:0],signimm);
+	regfile rf(clk,regwrite,instr[25:21],instr[20:16],writereg,result,srca,writedata);//result is 32-bit data, and writereg is the register address to be written
+	mux2 #(5) wrmux(instr[20:16],instr[15:11],regdst,writereg);//decide which register to write, rd or rt,rd and rt are the register address
+	mux2 #(32) resmux(aluout,readdata,memtoreg,result);//memtoreg=0 when the instruction is not lw, so the data to be written to register is the result of ALU, otherwise, the data is read from data memory
+	signext se(instr[15:0],signimm);//sign extend immediate
 
-	mux2 #(32) srcbmux(writedata,signimm,alusrc,srcb);
+	mux2 #(32) srcbmux(writedata,signimm,alusrc,srcb);//decide which data to use as srcb of ALU, 32-bit immediate or register data
 	alu alu(srca,srcb,alucontrol,aluout,overflow,zero);
 
 endmodule

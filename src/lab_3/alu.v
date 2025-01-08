@@ -29,14 +29,14 @@ module alu(
     );
 
 	wire[31:0] s,bout;
-	assign bout = op[2] ? ~b : b;
-	assign s = a + bout + op[2];
+	assign bout = op[2] ? ~b : b;//only when the instruction is beq, sub, or slt, op[2] is 1
+	assign s = a + bout + op[2];//unified addition and subtraction operations achieved through complement codes
 	always @(*) begin
 		case (op[1:0])
 			2'b00: y <= a & bout;
 			2'b01: y <= a | bout;
-			2'b10: y <= s;
-			2'b11: y <= s[31];
+			2'b10: y <= s;//add or sub or beq
+			2'b11: y <= s[31];//slt
 			default : y <= 32'b0;
 		endcase	
 	end

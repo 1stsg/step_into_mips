@@ -105,10 +105,10 @@ module datapath(
 	regfile rf(clk,regwriteW,rsD,rtD,writeregW,resultW,srcaD,srcbD);
 
 	//fetch stage logic
-	pc #(32) pcreg(clk,rst,~stallF,pcnextFD,pcF);
+	pc #(32) pcreg(clk,rst,~stallF,pcnextFD,pcF);//use stallF to stall the fetch stage when there is a hazard
 	adder pcadd1(pcF,32'b100,pcplus4F);
 	//decode stage
-	flopenr #(32) r1D(clk,rst,~stallD,pcplus4F,pcplus4D);
+	flopenr #(32) r1D(clk,rst,~stallD,pcplus4F,pcplus4D);//use stallD to stall the decode stage when there is a hazard
 	flopenrc #(32) r2D(clk,rst,~stallD,flushD,instrF,instrD);
 	signext se(instrD[15:0],signimmD);
 	sl2 immsh(signimmD,signimmshD);
@@ -131,11 +131,11 @@ module datapath(
 	floprc #(5) r5E(clk,rst,flushE,rtD,rtE);
 	floprc #(5) r6E(clk,rst,flushE,rdD,rdE);
 
-	mux3 #(32) forwardaemux(srcaE,resultW,aluoutM,forwardaE,srca2E);
+	mux3 #(32) forwardaemux(srcaE,resultW,aluoutM,forwardaE,srca2E);//the input of ALU comes from the register file, the memory or the ALU output of the previous instruction
 	mux3 #(32) forwardbemux(srcbE,resultW,aluoutM,forwardbE,srcb2E);
 	mux2 #(32) srcbmux(srcb2E,signimmE,alusrcE,srcb3E);
 	alu alu(srca2E,srcb3E,alucontrolE,aluoutE);
-	mux2 #(5) wrmux(rtE,rdE,regdstE,writeregE);
+	mux2 #(5) wrmux(rtE,rdE,regdstE,writeregE);//the letter E is used to indicate that the mux is in the execute stage of the pipeline
 
 	//mem stage
 	flopr #(32) r1M(clk,rst,srcb2E,writedataM);
@@ -145,6 +145,6 @@ module datapath(
 	//writeback stage
 	flopr #(32) r1W(clk,rst,aluoutM,aluoutW);
 	flopr #(32) r2W(clk,rst,readdataM,readdataW);
-	flopr #(5) r3W(clk,rst,writeregM,writeregW);
+	flopr #(5) r3W(clk,rst,writeregM,writeregW);//make sure to write to the register at proper time, not before the data is ready
 	mux2 #(32) resmux(aluoutW,readdataW,memtoregW,resultW);
 endmodule
